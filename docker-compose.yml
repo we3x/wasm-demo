@@ -1,0 +1,10 @@
+version: '3'
+services:
+  wasm_app:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/code
+    command: npm run dev
