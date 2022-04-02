@@ -6,7 +6,7 @@
 
 extern "C" {
     void sum() {
-        printf("SUCCESSFULLY LOADED!\n");
+        printf("REBUILD LOADED!\n");
         srand ( time(NULL) );
         printf("%d\n", rand());
     }

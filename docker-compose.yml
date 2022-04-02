@@ -3,8 +3,22 @@ services:
   wasm_app:
     build:
       context: .
-    ports:
-      - "3000:3000"
     volumes:
       - .:/code
+      - ./public:/code/public
+    command: make
+  
+  client_app:
+    build:
+      context: ./
+      dockerfile: Dockerfile.client
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/client
+      - ./public:/client/public
+      - /client/node_modules
     command: npm run dev
+    depends_on:
+      - wasm_app
+  

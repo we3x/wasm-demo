@@ -17,8 +17,3 @@ RUN mkdir -p /code
 
 COPY . /code
 WORKDIR /code
-
-RUN npm i -g n
-RUN n 14
-
-RUN npm i --silent
