@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react'
 import useCamera from '../hooks/useCamera'
+import { drawOutputImage, unpackProcessImageResult } from '../utils'
 
-const maxVideoSize = 200
+const maxVideoSize = 450
 
 const VideoBox = (props) => {
   const [processing, updateProcessing] = useState(false)
@@ -14,19 +15,22 @@ const VideoBox = (props) => {
 
     const ctx = canvasEl.current.getContext('2d')
     ctx.drawImage(videoElement.current, 0, 0, maxVideoSize, maxVideoSize)
-    const image = ctx.getImageData(0, 0, maxVideoSize, maxVideoSize)
 
-    const buf = Module._malloc(image.length * image.BYTES_PER_ELEMENT);
-    Module.HEAPU8.set(image, buf);
-    Module._onNewImage(buf, videoElement.current.videoWidth, videoElement.current.videoHeight);
-    const processedImage = HEAPU8.subarray(buf, buf + image.length*image.BYTES_PER_ELEMENT);
-    Module._free(buf)
+    const imageData = ctx.getImageData(0, 0, maxVideoSize, maxVideoSize)
 
-    // console.log(processedImage.buffer)
-    // document.getElementById('my-img').src = URL.createObjectURL(
-    //   new Blob([processedImage.buffer], { type: 'image/png' } /* (1) */)
-    // );
-    // ctx.putImageData(img, 0, 0)
+    var uintArray = imageData.data;
+
+    const uint8_t_ptr = Module._malloc(uintArray.length);
+
+    Module.HEAPU8.set(uintArray, uint8_t_ptr);
+
+    const addr = Module._onNewImage(uint8_t_ptr, maxVideoSize, maxVideoSize);
+
+    const processedImage = unpackProcessImageResult(Module, addr)
+
+    Module._free(uint8_t_ptr)
+
+    drawOutputImage(processedImage, "canvas")
     updateProcessing(false)
   }
   return (
@@ -38,7 +42,10 @@ const VideoBox = (props) => {
         flexDirection: 'column',
       }}
     >
-      <video className="video" playsInline ref={videoElement} />
+      <video className="video" playsInline ref={videoElement}
+        width={maxVideoSize}
+        height={maxVideoSize}
+      />
       <button
         disabled={processing}
         style={{ width: maxVideoSize, padding: 10 }}
@@ -52,7 +59,7 @@ const VideoBox = (props) => {
         width={maxVideoSize}
         height={maxVideoSize}
       ></canvas>
-      <img id="my-img"/>
+      <img id="my-img" />
     </div>
   )
 }

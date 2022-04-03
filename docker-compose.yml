@@ -18,7 +18,6 @@ services:
       - .:/client
       - ./public:/client/public
       - /client/node_modules
-    command: ./build-wasm.sh
     depends_on:
       - wasm_app
   
