@@ -2,6 +2,8 @@
 #include <emscripten/val.h>
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp> 
+#include <opencv2/highgui/highgui.hpp> 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <iostream>
@@ -13,6 +15,7 @@ using namespace cv;
 using namespace std;
 
 extern "C" {
+    
     int* returnImage(Mat image){
 
         int return_image_width = image.cols;
@@ -33,11 +36,22 @@ extern "C" {
         return return_data;
 
     }
-    int* onNewImage(uchar *data, int width, int height) {
+
+    int* onNewImage(uchar *data, int width, int height, int isTrashlod, int flip) {
 
         Mat image(height, width, CV_8UC4, data);
+
         Mat matNormalised;
+
         cvtColor(image, matNormalised, COLOR_RGB2GRAY);
+
+        if(isTrashlod){
+            adaptiveThreshold(matNormalised, matNormalised, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 11, 2);
+        }
+
+        if(flip){
+            cv::flip(matNormalised, matNormalised, flip);
+        }
 
         return returnImage(matNormalised);
     }

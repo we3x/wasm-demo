@@ -1,19 +1,16 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import useCamera from '../hooks/useCamera'
 import { drawOutputImage, unpackProcessImageResult } from '../utils'
 
 const maxVideoSize = 450
 
 const VideoBox = (props) => {
-  const [processing, updateProcessing] = useState(false)
   const videoElement = useRef(null)
   const canvasEl = useRef(null)
-  useCamera(videoElement, maxVideoSize);
+  const [loaded] = useCamera(videoElement, maxVideoSize);
+  const options = useRef({ gray: 0,trasholded: 0, flip: 0})
 
-  async function onClick() {
-    updateProcessing(true)
-
-    const ctx = canvasEl.current.getContext('2d')
+  const passToWasm = (ctx) => {
     ctx.drawImage(videoElement.current, 0, 0, maxVideoSize, maxVideoSize)
 
     const imageData = ctx.getImageData(0, 0, maxVideoSize, maxVideoSize)
@@ -24,15 +21,30 @@ const VideoBox = (props) => {
 
     Module.HEAPU8.set(uintArray, uint8_t_ptr);
 
-    const addr = Module._onNewImage(uint8_t_ptr, maxVideoSize, maxVideoSize);
-
-    const processedImage = unpackProcessImageResult(Module, addr)
+    const addr = Module._onNewImage(uint8_t_ptr, maxVideoSize, maxVideoSize, options.current.trasholded, options.current.flip );
 
     Module._free(uint8_t_ptr)
 
-    drawOutputImage(processedImage, "canvas")
-    updateProcessing(false)
+    return addr;
   }
+
+  const processImage = () => {
+    const ctx = canvasEl.current.getContext('2d')
+    const addr = passToWasm(ctx)
+    const processedImage = unpackProcessImageResult(Module, addr)
+    drawOutputImage(processedImage, "canvas")
+  }
+
+  useEffect(() => {
+    let timer;
+    if (loaded) {
+      timer = setInterval(() => processImage(), 200)
+    }
+    return () => {
+      clearInterval(timer)
+    }
+  }, [loaded])
+
   return (
     <div
       style={{
@@ -46,20 +58,19 @@ const VideoBox = (props) => {
         width={maxVideoSize}
         height={maxVideoSize}
       />
-      <button
-        disabled={processing}
-        style={{ width: maxVideoSize, padding: 10 }}
-        onClick={onClick}
-      >
-        {processing ? 'Processing...' : 'Take a photo'}
-      </button>
       <canvas
         id="canvas"
         ref={canvasEl}
         width={maxVideoSize}
         height={maxVideoSize}
+        style={{ position: 'absolute', top: 0 }}
       ></canvas>
-      <img id="my-img" />
+      <div>
+        <label>Trasholded</label>
+        <input type="checkbox" onChange={() => { options.current.trasholded = options.current.trasholded ? 0:1}} />
+        <label>Flip</label>
+        <input type="checkbox" onChange={() => { options.current.flip = options.current.flip ? 0:1}} />
+      </div>
     </div>
   )
 }

@@ -1,6 +1,7 @@
-const { useEffect } = require("react")
+const { useEffect, useState } = require("react")
 
 const useCamera = (videoElement, maxVideoSize=200) => {
+  const [loaded, setLoaded] = useState(false)
   useEffect(() => {
     async function initCamara() {
       videoElement.current.width = maxVideoSize
@@ -32,10 +33,12 @@ const useCamera = (videoElement, maxVideoSize=200) => {
     async function load() {
       const videoLoaded = await initCamara()
       videoLoaded.play()
+      setLoaded(true)
       return videoLoaded
     }
     load()
   }, [])
+  return [loaded]
 }
 
 export default useCamera

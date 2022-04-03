@@ -37,4 +37,4 @@ file(GLOB opencv_lib_core "${OPENCV_DIR}/build_wasm/lib/libopencv_core.a")
 target_link_libraries(main ${opencv_lib_core})
 
 # Specify linker arguments
-set_target_properties(main PROPERTIES LINK_FLAGS "-s EXPORTED_RUNTIME_METHODS=['ccall'] -s EXPORTED_FUNCTIONS=['_onNewImage'] -s WASM=1")
+set_target_properties(main PROPERTIES LINK_FLAGS "-s EXPORTED_RUNTIME_METHODS=['ccall'] -s EXPORTED_FUNCTIONS=['_onNewImage'] -s WASM=1 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1")
